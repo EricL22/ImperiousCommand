@@ -32,12 +32,12 @@ public abstract class RelativisticEntity : MonoBehaviour
 
     public float t1, t2, t3, ta1, ta2, ta3;
     // position function
-    float x(float t)
+    protected float x(float t)
     {
         return Mathf.Pow(c, 2) / acceleration * (Mathf.Sqrt(1 + Mathf.Pow(acceleration * t / c, 2)) - 1);
     }
     // derivative of the position function
-    float xp(float t)
+    protected float xp(float t)
     {
         return acceleration * t / Mathf.Sqrt(1 + Mathf.Pow(acceleration * t / c, 2));
     }

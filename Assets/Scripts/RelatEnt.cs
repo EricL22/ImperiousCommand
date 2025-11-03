@@ -1,34 +1,13 @@
-using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class RelatEnt : MonoBehaviour
+public abstract class RelatEnt : RelativisticEntity
 {
-    protected const int c = 1;    // Speed of Light (ly/y)
-
-    public Vector3 arrivalOffset; // Offset position when the entity arrives
-    protected Vector3 d;  // displacement vector from t = 0 to t = t3
-    protected Vector3 p;  // initial position
-    public float acceleration = 10f; // Acceleration (ly/y^2)
-    public float maxWarp = 0.1f; // Maximum warp factor
-
-    public bool isMoving { get; protected set; }
-    public Transform target;
-    public Transform currentLocation;
-    protected float timeElapsed = 0f;
     public Vector3 truePosition;
-    internal Transform referenceTransform { private get; set; }
 
     private readonly Queue<LightPacket<Vector3>> packetQueue = new Queue<LightPacket<Vector3>>();
 
-    protected virtual void Start()
-    {
-        referenceTransform = GameManager.instance.referenceTransform;
-        if (target != null)
-            SetDestination(target.position);
-    }
-
-    protected virtual void Update()
+    protected override void Update()
     {
         timeElapsed += Time.deltaTime;
         Move(timeElapsed);
@@ -46,26 +25,13 @@ public abstract class RelatEnt : MonoBehaviour
         }
     }
 
-    public float t1, t2, t3, ta1, ta2, ta3;
-    // position function
-    float x(float t)
-    {
-        return Mathf.Pow(c, 2) / acceleration * (Mathf.Sqrt(1 + Mathf.Pow(acceleration * t / c, 2)) - 1);
-    }
-    // derivative of the position function
-    float xp(float t)
-    {
-        return acceleration * t / Mathf.Sqrt(1 + Mathf.Pow(acceleration * t / c, 2));
-    }
-
-    public virtual void Move(float deltaTime)
+    public override void Move(float deltaTime)
     {
         if (!isMoving) return;
 
         Vector3 dx = GetVelocity(deltaTime);
 
         truePosition += dx * Time.deltaTime;
-        //Debug.Log($"Velocity: {dx.x}");
 
         // Check if close to destination
         if (dx.magnitude == 0f)
@@ -75,12 +41,9 @@ public abstract class RelatEnt : MonoBehaviour
             target = null;
             //transform.position = currentLocation.position + arrivalOffset;
         }
-
-        //Vector3 actualVelocity = GetVelocity(deltaTime);
-        //velocity = actualVelocity.magnitude;
     }
 
-    public virtual void SetDestination(Vector3 newDestination)
+    public override void SetDestination(Vector3 newDestination)
     {
         if (isMoving) return;
         if (maxWarp == 0f)
@@ -109,59 +72,5 @@ public abstract class RelatEnt : MonoBehaviour
         t3 = t1 + t2;
 
         isMoving = true;
-    }
-
-    public void SetDestination(Transform newTarget)
-    {
-        if (isMoving || target == currentLocation) return;
-
-        target = newTarget;
-        SetDestination(target.position);
-    }
-
-    // for testing, assume we are moving for one second
-    internal void SetDestination(Vector3 v, Vector3 x)
-    {
-        d = v - x;
-    }
-
-    // VERY COMPLEX Mathematical Stuff Follows. Proceed at your own peril.
-
-    protected virtual Vector3 GetVelocity(float t)
-    {
-        float dx = 0f;
-
-        // Phase 1: Acceleration
-        if (t >= 0 && t < t1)
-            dx = xp(t);
-
-        // Phase 2: Coasting
-        else if (t >= t1 && t < t2)
-            dx = xp(t1);
-
-        // Phase 3: Deceleration
-        else if (t >= t2 && t <= t3)
-            dx = -xp(t - t3);
-
-        return d.normalized * dx;
-    }
-
-    public Vector3 GetPosition(float t)
-    {
-        float dx = 0f;
-
-        // Phase 1: Acceleration
-        if (t >= 0 && t < t1)
-            dx = x(t);
-
-        // Phase 2: Coasting
-        else if (t >= t1 && t < t2)
-            dx = x(t1) + xp(t1) * (t - t1);
-
-        // Phase 3: Deceleration
-        else if (t >= t2 && t <= t3)
-            dx = d.magnitude - x(t - t3);
-
-        return p + d.normalized * dx;
     }
 }

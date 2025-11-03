@@ -22,7 +22,7 @@ public class TimeController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        Time.timeScale = 0; // Start the game paused
+        Time.timeScale = 1; // Start the game paused
         UpdateUI();
     }
 
